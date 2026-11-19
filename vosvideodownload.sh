@@ -1,23 +1,26 @@
 #!/bin/sh
 
 VOS_IOS_SCRIPT=1
-VERSION=1.03.25
+VERSION=1.03.28
 VERSION_TYPE=APPLE
 UPDATE_URL_BASE=https://raw.githubusercontent.com/vrederik123/VOSVideoDownload---Updates/main/vosvideodownload.sh
-UPDATE_URL=${VOS_UPDATE_URL:-$UPDATE_URL_BASE}
+UPDATE_URL=$UPDATE_URL_BASE
 
-case "$0" in
-    */*) SCRIPT_NAME=${0##*/}; SCRIPT_DIR=${0%/*}; [ -n "$SCRIPT_DIR" ] || SCRIPT_DIR=/ ;;
-    *) SCRIPT_NAME=$0; SCRIPT_DIR=. ;;
-esac
-SCRIPT_DIR=$(CDPATH= cd "$SCRIPT_DIR" && pwd) || {
+SCRIPT_NAME=${0##*/}
+SCRIPT_DIR=${0%/*}
+if [ "$SCRIPT_DIR" = "$0" ]; then
+    SCRIPT_DIR=.
+elif [ -z "$SCRIPT_DIR" ]; then
+    SCRIPT_DIR=/
+fi
+SCRIPT_DIR="$(CDPATH= cd "$SCRIPT_DIR" 2>/dev/null && pwd)" || {
     printf '%s\n' "Cannot resolve the script directory."
     exit 1
 }
-SCRIPT_PATH=$SCRIPT_DIR/$SCRIPT_NAME
-VIDEO_DIR=$SCRIPT_DIR/VIDEOS
-SETTINGS_FILE=$SCRIPT_DIR/settings.txt
-HISTORY_FILE=$SCRIPT_DIR/history.txt
+SCRIPT_PATH="$SCRIPT_DIR/$SCRIPT_NAME"
+VIDEO_DIR="$SCRIPT_DIR/VIDEOS"
+SETTINGS_FILE="$SCRIPT_DIR/settings.txt"
+HISTORY_FILE="$SCRIPT_DIR/history.txt"
 
 if command -v pkg >/dev/null 2>&1; then
     IOS_MODE=1
@@ -222,8 +225,8 @@ compare_versions() {
 rewrite_update_url() {
     awk -v url="$UPDATE_URL_BASE" '
         BEGIN { matches = 0 }
-        /^UPDATE_URL=/ {
-            print "UPDATE_URL=${VOS_UPDATE_URL:-" url "}"
+        /^UPDATE_URL_BASE=/ {
+            print "UPDATE_URL_BASE=" url
             matches++
             next
         }
