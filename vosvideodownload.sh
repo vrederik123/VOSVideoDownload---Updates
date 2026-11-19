@@ -1,23 +1,13 @@
 #!/bin/sh
 
 VOS_IOS_SCRIPT=1
-VERSION=1.03.28
+VERSION=1.03.29
 VERSION_TYPE=APPLE
 UPDATE_URL_BASE=https://raw.githubusercontent.com/vrederik123/VOSVideoDownload---Updates/main/vosvideodownload.sh
 UPDATE_URL=$UPDATE_URL_BASE
 
-SCRIPT_NAME=${0##*/}
-SCRIPT_DIR=${0%/*}
-if [ "$SCRIPT_DIR" = "$0" ]; then
-    SCRIPT_DIR=.
-elif [ -z "$SCRIPT_DIR" ]; then
-    SCRIPT_DIR=/
-fi
-SCRIPT_DIR="$(CDPATH= cd "$SCRIPT_DIR" 2>/dev/null && pwd)" || {
-    printf '%s\n' "Cannot resolve the script directory."
-    exit 1
-}
-SCRIPT_PATH="$SCRIPT_DIR/$SCRIPT_NAME"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_PATH="$SCRIPT_DIR/$(basename "$0")"
 VIDEO_DIR="$SCRIPT_DIR/VIDEOS"
 SETTINGS_FILE="$SCRIPT_DIR/settings.txt"
 HISTORY_FILE="$SCRIPT_DIR/history.txt"
@@ -168,9 +158,7 @@ save_settings() {
 }
 
 clear_screen() {
-    if [ -t 1 ]; then
-        printf '\033[2J\033[H'
-    fi
+    printf '\033[2J\033[3J\033[H'
 }
 
 banner() {
@@ -194,7 +182,7 @@ pause() {
 }
 
 read_input() {
-    IFS= read -r REPLY
+    read -r REPLY
 }
 
 valid_version() {
@@ -675,22 +663,21 @@ update_app() {
 main_menu() {
     while :; do
         banner
-        printf '%s\n' "${RED}WELCOME TO VOSVIDEODOWNLOAD - THE GO-TO VIDEO DOWNLOADER${RESET}" \
-            "${GREEN}1: Download video${RESET}" \
-            "${GREEN}2: Dependencies${RESET}" \
-            "${GREEN}3: Update VOSVideoDownload${RESET}" \
-            "${GREEN}4: VOSVideoDownload settings${RESET}" \
-            "${GREEN}5: Quit${RESET}" \
-            "${GREEN}6: Restart${RESET}"
-        color_prompt "$CYAN" "Select: "
-        read_input || return
-        case "$REPLY" in
+        printf '%s\n' "${RED}WELCOME TO VOSVIDEODOWNLOAD - THE GO-TO VIDEO DOWNLOADER${RESET}"
+        printf '%s\n' "${GREEN}1: Download video${RESET}"
+        printf '%s\n' "${GREEN}2: Dependencies${RESET}"
+        printf '%s\n' "${GREEN}3: Update VOSVideoDownload${RESET}"
+        printf '%s\n' "${GREEN}4: VOSVideoDownload settings${RESET}"
+        printf '%s\n' "${GREEN}5: Quit${RESET}"
+        printf '%s\n' "${GREEN}6: Restart${RESET}"
+        read -r choice
+        case "$choice" in
             1) download_menu ;;
             2) dependencies_menu ;;
             3) update_app ;;
             4) settings_menu ;;
-            5) return ;;
-            6) load_settings ;;
+            5) exit 0 ;;
+            6) exec "$SCRIPT_PATH" ;;
             *) ;;
         esac
     done
