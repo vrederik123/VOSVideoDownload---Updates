@@ -1,14 +1,16 @@
 #!/bin/sh
+# TURN INTO ".SH" TO USE.
+# ANY FALSE USE OF THIS PROGRAM CAN RESULT IN COPYRIGHT INFRINGEMENT TO THE RESPECTIVE AUTHORS.
 
 VOS_IOS_SCRIPT=1
-VERSION=1.03.29
+VERSION=1.03.30
 VERSION_TYPE=APPLE
 UPDATE_URL_BASE=https://raw.githubusercontent.com/vrederik123/VOSVideoDownload---Updates/main/vosvideodownload.sh
 UPDATE_URL=$UPDATE_URL_BASE
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SCRIPT_PATH="$SCRIPT_DIR/$(basename "$0")"
-VIDEO_DIR="$SCRIPT_DIR/VIDEOS"
+VIDEOS_DIR="$SCRIPT_DIR/VIDEOS"
 SETTINGS_FILE="$SCRIPT_DIR/settings.txt"
 HISTORY_FILE="$SCRIPT_DIR/history.txt"
 
@@ -18,39 +20,23 @@ else
     IOS_MODE=0
 fi
 
-if [ -t 1 ]; then
-    ESC=$(printf '\033')
-    RESET=${ESC}'[0m'
-    RED=${ESC}'[91m'
-    DARKRED=${ESC}'[31m'
-    ORANGE=${ESC}'[38;5;208m'
-    YELLOW=${ESC}'[93m'
-    GREEN=${ESC}'[92m'
-    CYAN=${ESC}'[96m'
-    PURPLE=${ESC}'[35m'
-    PINK=${ESC}'[95m'
-    WHITE=${ESC}'[97m'
-else
-    ESC=
-    RESET=
-    RED=
-    DARKRED=
-    ORANGE=
-    YELLOW=
-    GREEN=
-    CYAN=
-    PURPLE=
-    PINK=
-    WHITE=
-fi
+ESC=$(printf '\033')
+RED="${ESC}[91m"
+DARKRED="${ESC}[31m"
+ORANGE="${ESC}[38;5;208m"
+YELLOW="${ESC}[93m"
+GREEN="${ESC}[92m"
+CYAN="${ESC}[96m"
+PURPLE="${ESC}[35m"
+PINK="${ESC}[95m"
+WHITE="${ESC}[97m"
+RESET="${ESC}[0m"
 
 METADATA=DISABLED
 FLAME=STANDARD
 
 rgb_color() {
-    if [ -n "$ESC" ]; then
-        printf '%s[38;2;%s;%s;%sm' "$ESC" "$1" "$2" "$3"
-    fi
+    printf '%s[38;2;%s;%s;%sm' "$ESC" "$1" "$2" "$3"
 }
 
 set_flame_palette() {
@@ -64,14 +50,6 @@ set_flame_palette() {
     FLAME8=$(rgb_color "$1" "$2" "$3"); shift 3
     FLAME9=$(rgb_color "$1" "$2" "$3"); shift 3
     FLAME10=$(rgb_color "$1" "$2" "$3")
-}
-
-color_line() {
-    printf '%s%s%s\n' "$1" "$2" "$RESET"
-}
-
-color_prompt() {
-    printf '%s%s%s' "$1" "$2" "$RESET"
 }
 
 set_theme_color() {
@@ -111,11 +89,6 @@ set_theme_color() {
             set_flame_palette 255 25 45 255 75 0 255 155 0 255 225 0 135 255 0 \
                 0 235 100 0 220 220 0 125 255 100 45 255 255 60 200
             ;;
-        STANDARD)
-            FLAME_DISPLAY='RED-YELLOW FLAME'
-            set_flame_palette 120 0 0 155 0 0 190 5 0 225 20 0 250 45 0 \
-                255 80 0 255 120 0 255 165 0 255 205 0 255 240 75
-            ;;
         *)
             FLAME=STANDARD
             FLAME_DISPLAY='RED-YELLOW FLAME'
@@ -125,64 +98,431 @@ set_theme_color() {
     esac
 }
 
-load_settings() {
-    [ -f "$SETTINGS_FILE" ] || return 0
-    while IFS='=' read -r key value; do
-        case "$key" in
-            METADATA)
-                case "$value" in ENABLED|DISABLED) METADATA=$value ;; esac
-                ;;
-            FLAME)
-                case "$value" in
-                    STANDARD|PURPLE-PINK|GREEN-WHITE|ICE-BLUE|OCEAN-TEAL|SUNSET|CYBERPUNK|RAINBOW)
-                        FLAME=$value
-                        ;;
-                esac
-                ;;
-        esac
-    done < "$SETTINGS_FILE"
-    set_theme_color
-}
-
-save_settings() {
-    settings_tmp=$SETTINGS_FILE.tmp.$$
-    if ! printf 'METADATA=%s\nFLAME=%s\n' "$METADATA" "$FLAME" > "$settings_tmp"; then
-        printf '%s\n' "Could not write settings to $SETTINGS_FILE."
-        return 1
-    fi
-    if ! mv "$settings_tmp" "$SETTINGS_FILE"; then
-        rm -f "$settings_tmp"
-        printf '%s\n' "Could not install settings file at $SETTINGS_FILE."
-        return 1
-    fi
-}
-
-clear_screen() {
-    printf '\033[2J\033[3J\033[H'
+color_line() {
+    printf '%s%s%s\n' "$1" "$2" "$RESET"
 }
 
 banner() {
-    clear_screen
-    printf '%s\n' "${FLAME1} __     __   ___    ____     __     __  ___   ____    _____    ___${RESET}"
-    printf '%s\n' "${FLAME2} \ \   / /  / _ \  / ___|    \ \   / / |_ _| |  _ \  | ____|  / _ \${RESET}"
+    printf '\033[2J\033[3J\033[H'
+    printf '%s\n' "${FLAME1} __     __   ___    ____     __     __  ___   ____    _____    ___  ${RESET}"
+    printf '%s\n' "${FLAME2} \ \   / /  / _ \  / ___|    \ \   / / |_ _| |  _ \  | ____|  / _ \ ${RESET}"
     printf '%s\n' "${FLAME3}  \ \ / /  | | | | \___ \     \ \ / /   | |  | | | | |  _|   | | | |${RESET}"
     printf '%s\n' "${FLAME4}   \ V /   | |_| |  ___) |     \ V /    | |  | |_| | | |___  | |_| |${RESET}"
-    printf '%s\n' "${FLAME5}    \_/     \___/  |____/       \_/    |___| |____/  |_____|  \___/${RESET}"
-    printf '%s\n' "${FLAME6}  ____     ___   __        __  _   _   _        ___      _     ____${RESET}"
-    printf '%s\n' "${FLAME7} |  _ \   / _ \  \ \      / / | \ | | | |      / _ \    / \   |  _ \${RESET}"
+    printf '%s\n' "${FLAME5}    \_/     \___/  |____/       \_/    |___| |____/  |_____|  \___/ ${RESET}"
+    printf '%s\n' "${FLAME6}  ____     ___   __        __  _   _   _        ___      _     ____  ${RESET}"
+    printf '%s\n' "${FLAME7} |  _ \   / _ \  \ \      / / | \ | | | |      / _ \    / \   |  _ \ ${RESET}"
     printf '%s\n' "${FLAME8} | | | | | | | |  \ \ /\ / /  |  \| | | |     | | | |  / _ \  | | | |${RESET}"
     printf '%s\n' "${FLAME9} | |_| | | |_| |   \ V  V /   | |\  | | |___  | |_| | / ___ \ | |_| |${RESET}"
-    printf '%s\n' "${FLAME10} |____/   \___/     \_/\_/    |_| \_| |_____|  \___/ /_/   \_\|____/${RESET}"
+    printf '%s\n' "${FLAME10} |____/   \___/     \_/\_/    |_| \_| |_____|  \___/ /_/   \_\|____/ ${RESET}"
     printf '\n'
 }
 
 pause() {
-    color_prompt "$CYAN" "Press ENTER to continue..."
-    IFS= read -r _ || :
+    printf '%s' "${CYAN}PRESS ENTER TO CONTINUE${RESET}"
+    read -r enter
 }
 
-read_input() {
-    read -r REPLY
+load_settings() {
+    if [ -f "$SETTINGS_FILE" ]; then
+        while IFS='=' read -r key value; do
+            case "$key" in
+                METADATA)
+                    case "$value" in ENABLED|DISABLED) METADATA=$value ;; esac
+                    ;;
+                FLAME)
+                    case "$value" in
+                        STANDARD|PURPLE-PINK|GREEN-WHITE|ICE-BLUE|OCEAN-TEAL|SUNSET|CYBERPUNK|RAINBOW)
+                            FLAME=$value
+                            ;;
+                    esac
+                    ;;
+            esac
+        done < "$SETTINGS_FILE"
+    fi
+    set_theme_color
+}
+
+save_settings() {
+    settings_tmp="$SETTINGS_FILE.tmp.$$"
+    if ! printf 'METADATA=%s\nFLAME=%s\n' "$METADATA" "$FLAME" > "$settings_tmp"; then
+        color_line "$RED" "Could not write settings."
+        return 1
+    fi
+    if ! mv "$settings_tmp" "$SETTINGS_FILE"; then
+        rm -f "$settings_tmp"
+        color_line "$RED" "Could not save settings."
+        return 1
+    fi
+}
+
+ytdlp_available() {
+    if [ "$IOS_MODE" -eq 1 ]; then
+        command -v python3 >/dev/null 2>&1 && python3 -m yt_dlp --version >/dev/null 2>&1
+        return $?
+    fi
+    if command -v yt-dlp >/dev/null 2>&1; then
+        return 0
+    fi
+    command -v python3 >/dev/null 2>&1 && python3 -m yt_dlp --version >/dev/null 2>&1
+}
+
+run_ytdlp() {
+    if [ "$IOS_MODE" -eq 1 ] && command -v python3 >/dev/null 2>&1; then
+        python3 -m yt_dlp "$@"
+    elif command -v yt-dlp >/dev/null 2>&1; then
+        yt-dlp "$@"
+    elif command -v python3 >/dev/null 2>&1; then
+        python3 -m yt_dlp "$@"
+    else
+        color_line "$RED" "yt-dlp is not installed."
+        return 127
+    fi
+}
+
+ffmpeg_available() {
+    [ "$IOS_MODE" -eq 0 ] && command -v ffmpeg >/dev/null 2>&1
+}
+
+download_video() {
+    download_kind=$1
+    download_url=$2
+    output_template='%(title)s.%(ext)s'
+
+    case "$download_kind" in
+        video|channel-videos|channel-shorts)
+            if [ "$download_kind" = channel-videos ]; then
+                output_template='%(channel)s - VIDEOS/%(title)s.%(ext)s'
+            elif [ "$download_kind" = channel-shorts ]; then
+                output_template='%(channel)s - SHORTS/%(title)s.%(ext)s'
+            fi
+            if ffmpeg_available; then
+                set -- -f 'bv*[vcodec^=avc1]+ba[ext=m4a]/b[ext=mp4]' --merge-output-format mp4
+            else
+                set -- -f 'b[vcodec^=avc1][ext=mp4]/b[ext=mp4]/b'
+                color_line "$YELLOW" "Using a single-file video format; FFmpeg merging is unavailable here."
+            fi
+            ;;
+        audio)
+            if ffmpeg_available; then
+                set -- -x --audio-format mp3 --audio-quality 0
+            else
+                set -- -f 'ba[ext=m4a]/ba'
+                color_line "$YELLOW" "Saving source audio (usually M4A); MP3 conversion needs FFmpeg."
+            fi
+            ;;
+        video-only)
+            set -- -f 'bv*[vcodec^=avc1][ext=mp4]/bv*[ext=mp4]/bv*'
+            ;;
+    esac
+
+    if [ "$METADATA" = ENABLED ]; then
+        set -- "$@" --write-description --write-thumbnail
+        if ffmpeg_available; then
+            set -- "$@" --convert-thumbnails jpg
+        fi
+    fi
+
+    color_line "$CYAN" "DOWNLOADING..."
+    if run_ytdlp -P "$VIDEOS_DIR" -o "$output_template" "$@" -- "$download_url"; then
+        color_line "$GREEN" "DONE! SAVED UNDER: $VIDEOS_DIR"
+    else
+        download_status=$?
+        color_line "$RED" "DOWNLOAD FAILED (EXIT CODE $download_status). CHECK URL, NETWORK, AND DEPENDENCIES."
+    fi
+}
+
+download_menu() {
+    while true; do
+        banner
+        printf '%s\n' "${RED}DOWNLOAD OPTIONS${RESET}"
+        printf '%s\n' "${GREEN}1: DOWNLOAD VIDEO${RESET}"
+        printf '%s\n' "${GREEN}2: DOWNLOAD AUDIO${RESET}"
+        printf '%s\n' "${GREEN}3: DOWNLOAD VIDEO ONLY${RESET}"
+        printf '%s\n' "${GREEN}4: DOWNLOAD ALL VIDEOS ON CHANNEL${RESET}"
+        printf '%s\n' "${GREEN}5: DOWNLOAD ALL SHORTS ON CHANNEL${RESET}"
+        printf '%s\n' "${CYAN}ENTER: BACK TO MAIN MENU${RESET}"
+        read -r choice
+
+        case "$choice" in
+            '') return ;;
+            1) download_kind=video; prompt="PASTE YOUTUBE VIDEO URL" ;;
+            2) download_kind=audio; prompt="PASTE YOUTUBE URL FOR AUDIO" ;;
+            3) download_kind=video-only; prompt="PASTE YOUTUBE VIDEO URL" ;;
+            4) download_kind=channel-videos; prompt="PASTE YOUTUBE CHANNEL /VIDEOS URL" ;;
+            5) download_kind=channel-shorts; prompt="PASTE YOUTUBE CHANNEL /SHORTS URL" ;;
+            *) continue ;;
+        esac
+
+        if ! ytdlp_available; then
+            color_line "$RED" "YT-DLP IS MISSING. INSTALL IT FROM DEPENDENCIES FIRST."
+            pause
+            continue
+        fi
+        printf '%s' "${CYAN}${prompt} (OR PRESS ENTER TO GO BACK): ${RESET}"
+        read -r download_url
+        if [ -n "$download_url" ]; then
+            mkdir -p "$VIDEOS_DIR"
+            download_video "$download_kind" "$download_url"
+            pause
+        fi
+    done
+}
+
+dep_check() {
+    banner
+    missing=0
+
+    if ytdlp_available; then
+        color_line "$GREEN" "[OK] YT-DLP IS INSTALLED."
+    else
+        color_line "$RED" "[MISSING] YT-DLP IS NOT INSTALLED."
+        missing=1
+    fi
+
+    if [ "$IOS_MODE" -eq 1 ]; then
+        color_line "$YELLOW" "[INFO] A-SHELL PROVIDES ITS OWN FFMPEG SUPPORT."
+    elif command -v ffmpeg >/dev/null 2>&1; then
+        color_line "$GREEN" "[OK] FFMPEG IS INSTALLED."
+    else
+        color_line "$YELLOW" "[OPTIONAL] FFMPEG IS NOT INSTALLED."
+        missing=1
+    fi
+
+    printf '\n'
+    if [ "$missing" -eq 1 ]; then
+        printf '%s\n' "${RED}WOULD YOU LIKE TO INSTALL OR REPAIR DEPENDENCIES?${RESET}"
+        printf '%s\n' "${GREEN}[Y] YES | [N] NO${RESET}"
+        read -r depchoice
+        case "$depchoice" in
+            Y|y) dep_download ;;
+        esac
+    else
+        color_line "$GREEN" "ALL REQUIRED DEPENDENCIES ARE WORKING."
+        pause
+    fi
+}
+
+pip_install_ytdlp() {
+    if command -v pip >/dev/null 2>&1; then
+        pip "$@"
+    elif command -v python3 >/dev/null 2>&1; then
+        python3 -m pip "$@"
+    else
+        color_line "$RED" "PYTHON/PIP IS NOT AVAILABLE IN THIS SHELL."
+        return 127
+    fi
+}
+
+dep_download() {
+    banner
+    color_line "$RED" "INSTALLING DEPENDENCIES..."
+    if [ "$IOS_MODE" -eq 1 ]; then
+        pip_install_ytdlp install yt-dlp
+    elif command -v brew >/dev/null 2>&1; then
+        brew install yt-dlp ffmpeg
+    else
+        pip_install_ytdlp install yt-dlp
+    fi
+    install_status=$?
+    printf '\n'
+    if [ "$install_status" -eq 0 ]; then
+        color_line "$GREEN" "INSTALLATION COMPLETE!"
+    else
+        color_line "$RED" "INSTALLATION FAILED (EXIT CODE $install_status)."
+    fi
+    pause
+}
+
+dep_update() {
+    banner
+    color_line "$RED" "UPDATING DEPENDENCIES..."
+    if [ "$IOS_MODE" -eq 1 ]; then
+        pip_install_ytdlp install --upgrade yt-dlp
+    elif command -v brew >/dev/null 2>&1; then
+        brew upgrade yt-dlp ffmpeg
+    else
+        pip_install_ytdlp install --upgrade yt-dlp
+    fi
+    update_status=$?
+    printf '\n'
+    if [ "$update_status" -eq 0 ]; then
+        color_line "$GREEN" "DEPENDENCY UPDATE COMPLETE!"
+    else
+        color_line "$RED" "DEPENDENCY UPDATE FAILED (EXIT CODE $update_status)."
+    fi
+    pause
+}
+
+dep_delete() {
+    while true; do
+        banner
+        printf '%s\n' "${RED}WHICH WOULD YOU LIKE TO UNINSTALL?${RESET}"
+        printf '%s\n' "${GREEN}1: YT-DLP${RESET}"
+        printf '%s\n' "${GREEN}2: FFMPEG (MACOS/HOMEBREW ONLY)${RESET}"
+        printf '%s\n' "${GREEN}3: ALL REMOVABLE DEPENDENCIES${RESET}"
+        printf '%s\n' "${CYAN}ENTER: GO BACK${RESET}"
+        read -r delchoice
+
+        case "$delchoice" in
+            '')
+                return
+                ;;
+            1|3)
+                banner
+                color_line "$RED" "UNINSTALLING YT-DLP..."
+                if [ "$IOS_MODE" -eq 1 ] || ! command -v brew >/dev/null 2>&1; then
+                    pip_install_ytdlp uninstall -y yt-dlp
+                elif [ "$delchoice" = 3 ]; then
+                    brew uninstall yt-dlp ffmpeg
+                else
+                    brew uninstall yt-dlp
+                fi
+                delete_status=$?
+                if [ "$delete_status" -eq 0 ]; then
+                    color_line "$GREEN" "DEPENDENCY REMOVED."
+                else
+                    color_line "$RED" "UNINSTALL FAILED (EXIT CODE $delete_status)."
+                fi
+                pause
+                return
+                ;;
+            2)
+                if [ "$IOS_MODE" -eq 1 ] || ! command -v brew >/dev/null 2>&1; then
+                    color_line "$YELLOW" "FFMPEG IS BUILT INTO A-SHELL OR IS NOT MANAGED BY HOMEBREW."
+                else
+                    brew uninstall ffmpeg
+                fi
+                pause
+                return
+                ;;
+        esac
+    done
+}
+
+dependencies_menu() {
+    while true; do
+        banner
+        printf '%s\n' "${RED}DEPENDENCIES${RESET}"
+        printf '%s\n' "${GREEN}1: CHECK IF DEPENDENCIES ARE INSTALLED${RESET}"
+        printf '%s\n' "${GREEN}2: INSTALL DEPENDENCIES${RESET}"
+        printf '%s\n' "${GREEN}3: UPDATE DEPENDENCIES${RESET}"
+        printf '%s\n' "${GREEN}4: DELETE DEPENDENCIES${RESET}"
+        printf '%s\n' "${CYAN}ENTER: BACK TO MAIN MENU${RESET}"
+        read -r depchoice
+
+        case "$depchoice" in
+            '') return ;;
+            1) dep_check ;;
+            2) dep_download ;;
+            3) dep_update ;;
+            4) dep_delete ;;
+        esac
+    done
+}
+
+update_count() {
+    if [ -f "$HISTORY_FILE" ]; then
+        awk 'NR > 1 && /^UPDATE:/ { count++ } END { print count + 0 }' "$HISTORY_FILE"
+    else
+        printf '0\n'
+    fi
+}
+
+video_count() {
+    if [ ! -d "$VIDEOS_DIR" ]; then
+        printf '0\n'
+        return
+    fi
+    find "$VIDEOS_DIR" -type f | awk '
+        tolower($0) ~ /\.(mp4|mp3|mkv|webm|m4a|wav|mov|avi|flv|ogg|opus|aac|wmv)$/ { count++ }
+        END { print count + 0 }
+    '
+}
+
+version_info() {
+    banner
+    dep_status=INSTALLED
+    if ! ytdlp_available; then
+        dep_status="YT-DLP NOT INSTALLED"
+    fi
+    color_line "$RED" "VOSVIDEODOWNLOAD"
+    color_line "$GREEN" "VERSION: $YELLOW$VERSION | $VERSION_TYPE"
+    color_line "$GREEN" "YT-DLP: $YELLOW$dep_status"
+    if [ "$IOS_MODE" -eq 1 ]; then
+        color_line "$GREEN" "FFMPEG: $YELLOW A-SHELL BUILT-IN"
+    elif command -v ffmpeg >/dev/null 2>&1; then
+        color_line "$GREEN" "FFMPEG: $YELLOW INSTALLED"
+    else
+        color_line "$GREEN" "FFMPEG: $YELLOW NOT INSTALLED (OPTIONAL)"
+    fi
+    color_line "$GREEN" "VIDEOS DOWNLOADED: $YELLOW$(video_count)"
+    color_line "$GREEN" "APP UPDATES INSTALLED: $YELLOW$(update_count)"
+    printf '\n'
+    pause
+}
+
+settings_menu() {
+    while true; do
+        banner
+        color_line "$RED" "VOSVIDEODOWNLOAD SETTINGS"
+        color_line "$GREEN" "METADATA / THUMBNAILS: $YELLOW$METADATA"
+        color_line "$GREEN" "ASCII FLAME: $YELLOW$FLAME_DISPLAY"
+        printf '%s\n' "${GREEN}1: TOGGLE METADATA / THUMBNAILS${RESET}"
+        printf '%s\n' "${GREEN}2: CHANGE ASCII FLAME${RESET}"
+        printf '%s\n' "${GREEN}3: VERSION INFORMATION${RESET}"
+        printf '%s\n' "${CYAN}ENTER: BACK TO MAIN MENU${RESET}"
+        read -r setting_choice
+        case "$setting_choice" in
+            '')
+                return
+                ;;
+            1)
+                if [ "$METADATA" = ENABLED ]; then
+                    METADATA=DISABLED
+                else
+                    METADATA=ENABLED
+                fi
+                save_settings
+                ;;
+            2)
+                flame_menu
+                ;;
+            3)
+                version_info
+                ;;
+        esac
+    done
+}
+
+flame_menu() {
+    while true; do
+        banner
+        printf '%s\n' "${RED}ASCII FLAME SETTINGS${RESET}"
+        printf '%s\n' "${GREEN}1: RED-YELLOW FLAME${RESET}"
+        printf '%s\n' "${GREEN}2: PURPLE-PINK FLAME${RESET}"
+        printf '%s\n' "${GREEN}3: GREEN-WHITE FLAME${RESET}"
+        printf '%s\n' "${GREEN}4: ICE-BLUE FLAME${RESET}"
+        printf '%s\n' "${GREEN}5: OCEAN-TEAL FLAME${RESET}"
+        printf '%s\n' "${GREEN}6: SUNSET FLAME${RESET}"
+        printf '%s\n' "${GREEN}7: CYBERPUNK FLAME${RESET}"
+        printf '%s\n' "${GREEN}8: RAINBOW FLAME${RESET}"
+        printf '%s\n' "${CYAN}ENTER: BACK TO SETTINGS${RESET}"
+        read -r flame_choice
+        case "$flame_choice" in
+            '') return ;;
+            1) FLAME=STANDARD ;;
+            2) FLAME=PURPLE-PINK ;;
+            3) FLAME=GREEN-WHITE ;;
+            4) FLAME=ICE-BLUE ;;
+            5) FLAME=OCEAN-TEAL ;;
+            6) FLAME=SUNSET ;;
+            7) FLAME=CYBERPUNK ;;
+            8) FLAME=RAINBOW ;;
+            *) continue ;;
+        esac
+        set_theme_color
+        save_settings
+    done
 }
 
 valid_version() {
@@ -223,341 +563,6 @@ rewrite_update_url() {
     ' "$1" > "$2"
 }
 
-validate_update_syntax() {
-    if [ "$IOS_MODE" -eq 1 ]; then
-        color_line "$YELLOW" "Skipping nested sh -n validation in a-Shell; product and version checks passed."
-        return 0
-    fi
-    sh -n "$1"
-}
-
-run_ytdlp() {
-    if [ "$IOS_MODE" -eq 1 ] && command -v python3 >/dev/null 2>&1; then
-        python3 -m yt_dlp "$@"
-    elif command -v yt-dlp >/dev/null 2>&1; then
-        command yt-dlp "$@"
-    elif command -v python3 >/dev/null 2>&1; then
-        python3 -m yt_dlp "$@"
-    else
-        color_line "$RED" "yt-dlp is not installed. Open Dependencies to install it."
-        return 127
-    fi
-}
-
-ytdlp_available() {
-    if [ "$IOS_MODE" -eq 1 ]; then
-        command -v python3 >/dev/null 2>&1 && python3 -m yt_dlp --version >/dev/null 2>&1
-        return $?
-    fi
-    if command -v yt-dlp >/dev/null 2>&1; then
-        return 0
-    fi
-    command -v python3 >/dev/null 2>&1 && python3 -m yt_dlp --version >/dev/null 2>&1
-}
-
-ffmpeg_available() {
-    [ "$IOS_MODE" -eq 0 ] && command -v ffmpeg >/dev/null 2>&1
-}
-
-download_video() {
-    download_kind=$1
-    download_url=$2
-
-    case "$download_kind" in
-        video)
-            output_template='%(title)s.%(ext)s'
-            if ffmpeg_available; then
-                set -- -f 'bv*[vcodec^=avc1]+ba[ext=m4a]/b[ext=mp4]' --merge-output-format mp4
-            else
-                set -- -f 'b[vcodec^=avc1][ext=mp4]/b[ext=mp4]/b'
-                color_line "$YELLOW" "Using a single-file video format; FFmpeg merging is unavailable here."
-            fi
-            ;;
-        audio)
-            output_template='%(title)s.%(ext)s'
-            if ffmpeg_available; then
-                set -- -x --audio-format mp3 --audio-quality 0
-            else
-                set -- -f 'ba[ext=m4a]/ba'
-                color_line "$YELLOW" "Saving the source audio (usually M4A) because FFmpeg MP3 conversion is unavailable."
-            fi
-            ;;
-        video-only)
-            output_template='%(title)s.%(ext)s'
-            set -- -f 'bv*[vcodec^=avc1][ext=mp4]/bv*[ext=mp4]/bv*'
-            ;;
-        channel-videos)
-            output_template='%(channel)s - VIDEOS/%(title)s.%(ext)s'
-            if ffmpeg_available; then
-                set -- -f 'bv*[vcodec^=avc1]+ba[ext=m4a]/b[ext=mp4]' --merge-output-format mp4
-            else
-                set -- -f 'b[vcodec^=avc1][ext=mp4]/b[ext=mp4]/b'
-                color_line "$YELLOW" "Using single-file channel formats; FFmpeg merging is unavailable here."
-            fi
-            ;;
-        channel-shorts)
-            output_template='%(channel)s - SHORTS/%(title)s.%(ext)s'
-            if ffmpeg_available; then
-                set -- -f 'bv*[vcodec^=avc1]+ba[ext=m4a]/b[ext=mp4]' --merge-output-format mp4
-            else
-                set -- -f 'b[vcodec^=avc1][ext=mp4]/b[ext=mp4]/b'
-                color_line "$YELLOW" "Using single-file channel formats; FFmpeg merging is unavailable here."
-            fi
-            ;;
-    esac
-
-    if [ "$METADATA" = ENABLED ]; then
-        set -- "$@" --write-description --write-thumbnail
-        if ffmpeg_available; then
-            set -- "$@" --convert-thumbnails jpg
-        fi
-    fi
-
-    color_line "$CYAN" "Downloading..."
-    if run_ytdlp -P "$VIDEO_DIR" -o "$output_template" "$@" -- "$download_url"; then
-        color_line "$GREEN" "Done. Saved under: $VIDEO_DIR"
-    else
-        download_status=$?
-        color_line "$RED" "Download failed (yt-dlp exit code $download_status). Check the URL, network, and dependencies."
-    fi
-}
-
-download_menu() {
-    while :; do
-        banner
-        printf '%s\n' "${RED}DOWNLOAD OPTIONS${RESET}" \
-            "${GREEN}1: Download video${RESET}" \
-            "${GREEN}2: Download audio${RESET}" \
-            "${GREEN}3: Download video only (no audio)${RESET}" \
-            "${GREEN}4: Download all videos on channel${RESET}" \
-            "${GREEN}5: Download all shorts on channel${RESET}" \
-            "${CYAN}ENTER: Back to main menu${RESET}"
-        color_prompt "$CYAN" "Select: "
-        read_input || return
-        case "$REPLY" in
-            '') return ;;
-            1) download_kind=video; prompt="Paste video URL" ;;
-            2) download_kind=audio; prompt="Paste URL for audio" ;;
-            3) download_kind=video-only; prompt="Paste URL for video only" ;;
-            4) download_kind=channel-videos; prompt="Paste channel /videos URL" ;;
-            5) download_kind=channel-shorts; prompt="Paste channel /shorts URL" ;;
-            *) continue ;;
-        esac
-        if ! ytdlp_available; then
-            color_line "$RED" "yt-dlp is missing. Install it from Dependencies first."
-            pause
-            continue
-        fi
-        color_prompt "$CYAN" "$prompt (ENTER to go back): "
-        read_input || return
-        [ -n "$REPLY" ] || continue
-        download_video "$download_kind" "$REPLY"
-        pause
-    done
-}
-
-dependency_status() {
-    if ytdlp_available; then
-        if ytdlp_version=$(run_ytdlp --version); then
-            color_line "$GREEN" "yt-dlp: installed ($ytdlp_version)"
-        else
-            color_line "$YELLOW" "yt-dlp was found but could not be run."
-        fi
-    else
-        color_line "$RED" "yt-dlp: not installed"
-    fi
-    if [ "$IOS_MODE" -eq 1 ]; then
-        color_line "$YELLOW" "FFmpeg: not used for iOS downloads (a-Shell cannot run yt-dlp's FFmpeg subprocess)"
-    elif command -v ffmpeg >/dev/null 2>&1; then
-        color_line "$GREEN" "FFmpeg: installed"
-    else
-        color_line "$YELLOW" "FFmpeg: not installed (optional; required for MP3 conversion and stream merging)"
-    fi
-}
-
-pip_install_ytdlp() {
-    if command -v pip >/dev/null 2>&1; then
-        pip "$@"
-    elif command -v python3 >/dev/null 2>&1; then
-        python3 -m pip "$@"
-    else
-        printf '%s\n' "Python/pip is unavailable. Install Python in your terminal app first."
-        return 127
-    fi
-}
-
-dependency_install_or_update() {
-    dependency_action=$1
-    if [ "$IOS_MODE" -eq 1 ]; then
-        if [ "$dependency_action" = update ]; then
-            pip_install_ytdlp install --upgrade yt-dlp
-        else
-            pip_install_ytdlp install yt-dlp
-        fi
-    elif command -v brew >/dev/null 2>&1; then
-        if [ "$dependency_action" = update ]; then
-            brew upgrade yt-dlp ffmpeg
-        else
-            brew install yt-dlp ffmpeg
-        fi
-    else
-        color_line "$YELLOW" "Homebrew was not found. Installing yt-dlp with pip; install FFmpeg separately if needed."
-        if [ "$dependency_action" = update ]; then
-            pip_install_ytdlp install --upgrade yt-dlp
-        else
-            pip_install_ytdlp install yt-dlp
-        fi
-    fi
-}
-
-dependency_delete() {
-    color_line "$YELLOW" "This removes yt-dlp and, on macOS with Homebrew, FFmpeg from the shared environment."
-    color_prompt "$CYAN" "Continue? [y/N]: "
-    read_input || return
-    case "$REPLY" in
-        y|Y)
-            if [ "$IOS_MODE" -eq 1 ] || ! command -v brew >/dev/null 2>&1; then
-                pip_install_ytdlp uninstall -y yt-dlp
-            else
-                brew uninstall yt-dlp ffmpeg
-            fi
-            ;;
-        *) color_line "$YELLOW" "Cancelled." ;;
-    esac
-}
-
-dependencies_menu() {
-    while :; do
-        banner
-        printf '%s\n' "${RED}DEPENDENCIES${RESET}" \
-            "${GREEN}1: Check dependencies${RESET}" \
-            "${GREEN}2: Install / repair dependencies${RESET}" \
-            "${GREEN}3: Update dependencies${RESET}" \
-            "${GREEN}4: Delete dependencies${RESET}" \
-            "${CYAN}ENTER: Back to main menu${RESET}"
-        color_prompt "$CYAN" "Select: "
-        read_input || return
-        case "$REPLY" in
-            '') return ;;
-            1) dependency_status; pause ;;
-            2|3)
-                if [ "$REPLY" = 2 ]; then
-                    dependency_install_or_update install
-                else
-                    dependency_install_or_update update
-                fi
-                dependency_result=$?
-                if [ "$dependency_result" -eq 0 ]; then
-                    color_line "$GREEN" "Dependency operation completed."
-                else
-                    color_line "$RED" "Dependency operation failed (exit code $dependency_result)."
-                fi
-                pause
-                ;;
-            4)
-                dependency_delete
-                dependency_result=$?
-                if [ "$dependency_result" -ne 0 ]; then
-                    color_line "$RED" "Dependency removal failed (exit code $dependency_result)."
-                fi
-                pause
-                ;;
-            *) ;;
-        esac
-    done
-}
-
-update_count() {
-    if [ -f "$HISTORY_FILE" ]; then
-        awk 'NR > 1 && /^UPDATE:/ { count++ } END { print count + 0 }' "$HISTORY_FILE"
-    else
-        printf '0\n'
-    fi
-}
-
-video_count() {
-    video_files=$(find "$VIDEO_DIR" -type f) || return 1
-    printf '%s\n' "$video_files" |
-        awk 'tolower($0) ~ /\.(mp4|mp3|mkv|webm|m4a|wav|mov|avi|flv|ogg|opus|aac|wmv)$/ { count++ }
-             END { print count + 0 }'
-}
-
-settings_menu() {
-    while :; do
-        banner
-        color_line "$RED" "VOSVIDEODOWNLOAD SETTINGS"
-        color_line "$GREEN" "Version: $YELLOW$VERSION$GREEN | $VERSION_TYPE"
-        color_line "$GREEN" "Updates installed: $YELLOW$(update_count)"
-        color_line "$GREEN" "Intended platform: $YELLOW$([ "$IOS_MODE" -eq 1 ] && printf 'iOS (a-Shell)' || printf 'macOS / POSIX shell')"
-        if videos_total=$(video_count); then
-            color_line "$GREEN" "Videos downloaded: $YELLOW$videos_total"
-        else
-            color_line "$RED" "Videos downloaded: unavailable (could not read the Videos folder)"
-        fi
-        printf '\n'
-        printf '%s\n' \
-            "${GREEN}1: Toggle metadata/thumbnails ($YELLOW$METADATA$GREEN)${RESET}" \
-            "${GREEN}2: ASCII flame ($YELLOW$FLAME_DISPLAY$GREEN)${RESET}" \
-            "${CYAN}ENTER: Back${RESET}"
-        color_prompt "$CYAN" "Select: "
-        read_input || return
-        case "$REPLY" in
-            '')
-                return
-                ;;
-            1)
-                if [ "$METADATA" = ENABLED ]; then METADATA=DISABLED; else METADATA=ENABLED; fi
-                save_settings || pause
-                ;;
-            2)
-                flame_menu
-                ;;
-            *)
-                ;;
-        esac
-    done
-}
-
-flame_option() {
-    if [ "$FLAME" = "$1" ]; then
-        color_line "$GREEN" "$2: (ENABLED) $3"
-    else
-        color_line "$GREEN" "$2: $3"
-    fi
-}
-
-flame_menu() {
-    while :; do
-        banner
-        color_line "$RED" "ASCII FLAME SETTINGS"
-        flame_option STANDARD 1 "RED-YELLOW FLAME"
-        flame_option PURPLE-PINK 2 "PURPLE-PINK FLAME"
-        flame_option GREEN-WHITE 3 "GREEN-WHITE FLAME"
-        flame_option ICE-BLUE 4 "ICE-BLUE FLAME"
-        flame_option OCEAN-TEAL 5 "OCEAN-TEAL FLAME"
-        flame_option SUNSET 6 "SUNSET FLAME"
-        flame_option CYBERPUNK 7 "CYBERPUNK FLAME"
-        flame_option RAINBOW 8 "RAINBOW FLAME"
-        color_line "$CYAN" "ENTER: Back to settings"
-        color_prompt "$CYAN" "Select: "
-        read_input || return
-        case "$REPLY" in
-            '') return ;;
-            1) FLAME=STANDARD ;;
-            2) FLAME=PURPLE-PINK ;;
-            3) FLAME=GREEN-WHITE ;;
-            4) FLAME=ICE-BLUE ;;
-            5) FLAME=OCEAN-TEAL ;;
-            6) FLAME=SUNSET ;;
-            7) FLAME=CYBERPUNK ;;
-            8) FLAME=RAINBOW ;;
-            *) continue ;;
-        esac
-        set_theme_color
-        save_settings || pause
-    done
-}
-
 record_update() {
     update_date=$(date '+%m/%d/%Y at %I:%M %p') || return 1
     if [ ! -f "$HISTORY_FILE" ]; then
@@ -569,124 +574,129 @@ record_update() {
 
 update_app() {
     banner
-    color_line "$RED" "Checking for VOSVideoDownload updates..."
+    color_line "$RED" "CHECKING FOR VOSVIDEODOWNLOAD UPDATES..."
     if ! command -v curl >/dev/null 2>&1; then
-        color_line "$RED" "curl is unavailable in this shell."
+        color_line "$RED" "CURL IS UNAVAILABLE IN THIS SHELL."
         pause
         return
     fi
-    update_tmp=$SCRIPT_PATH.update.$$
-    update_prepared=$update_tmp.prepared
+
+    update_tmp="$SCRIPT_PATH.update.$$"
+    update_ready="$update_tmp.ready"
     if ! curl --location --fail --silent --show-error --connect-timeout 15 --max-time 60 \
         "$UPDATE_URL" --output "$update_tmp"; then
-        rm -f "$update_tmp" "$update_prepared"
-        color_line "$RED" "Update download failed. Check the connection and the iOS update URL."
-        color_line "$YELLOW" "The update script must be published at: $UPDATE_URL"
+        rm -f "$update_tmp" "$update_ready"
+        color_line "$RED" "UPDATE DOWNLOAD FAILED. CHECK YOUR CONNECTION."
+        color_line "$YELLOW" "UPDATE URL: $UPDATE_URL"
         pause
         return
     fi
     if [ ! -s "$update_tmp" ] || ! grep -Fxq 'VOS_IOS_SCRIPT=1' "$update_tmp"; then
-        rm -f "$update_tmp" "$update_prepared"
-        color_line "$RED" "The downloaded file is not a valid VOSVideoDownload Apple script."
-        pause
-        return
-    fi
-    remote_version=$(sed -n 's/^VERSION=//p' "$update_tmp" | head -n 1)
-    remote_type=$(sed -n 's/^VERSION_TYPE=//p' "$update_tmp" | head -n 1)
-    if ! valid_version "$remote_version" || [ -z "$remote_type" ] ||
-        printf '%s\n' "$remote_type" | grep -Eq '[^A-Za-z0-9_-]'; then
-        rm -f "$update_tmp" "$update_prepared"
-        color_line "$RED" "The downloaded update has invalid version metadata."
-        pause
-        return
-    fi
-    if ! rewrite_update_url "$update_tmp" "$update_prepared"; then
-        rm -f "$update_tmp" "$update_prepared"
-        color_line "$RED" "Could not set the update script's URL."
-        pause
-        return
-    fi
-    if ! validate_update_syntax "$update_prepared"; then
-        rm -f "$update_tmp" "$update_prepared"
-        color_line "$RED" "The downloaded update has invalid shell syntax."
-        pause
-        return
-    fi
-    version_order=$(compare_versions "$VERSION" "$remote_version")
-    if [ "$version_order" -lt 0 ] ||
-        { [ "$version_order" -eq 0 ] && [ "$VERSION_TYPE" = "$remote_type" ]; }; then
-        rm -f "$update_tmp" "$update_prepared"
-        color_line "$GREEN" "VOSVIDEODOWNLOAD $VERSION is already up to date."
+        rm -f "$update_tmp" "$update_ready"
+        color_line "$RED" "THE DOWNLOADED FILE IS NOT A VALID APPLE VERSION."
         pause
         return
     fi
 
-    color_line "$CYAN" "Update found: $VERSION to $remote_version ($remote_type)"
-    color_line "$YELLOW" "This replaces only the script; settings, history, and downloaded videos stay in place."
-    color_prompt "$CYAN" "Install this update? [y/N]: "
-    read_input || {
-        rm -f "$update_tmp" "$update_prepared"
+    remote_version=$(sed -n 's/^VERSION=//p' "$update_tmp" | head -n 1)
+    remote_type=$(sed -n 's/^VERSION_TYPE=//p' "$update_tmp" | head -n 1)
+    if ! valid_version "$remote_version" || [ -z "$remote_type" ]; then
+        rm -f "$update_tmp" "$update_ready"
+        color_line "$RED" "THE UPDATE HAS INVALID VERSION INFORMATION."
+        pause
         return
-    }
-    case "$REPLY" in
-        y|Y) ;;
-        *)
-            rm -f "$update_tmp" "$update_prepared"
-            color_line "$YELLOW" "Update cancelled."
+    fi
+    case "$remote_type" in
+        *[!A-Za-z0-9_-]*)
+            rm -f "$update_tmp" "$update_ready"
+            color_line "$RED" "THE UPDATE HAS INVALID VERSION INFORMATION."
             pause
             return
             ;;
     esac
-    if [ -x "$SCRIPT_PATH" ] && ! chmod +x "$update_prepared"; then
-        rm -f "$update_tmp" "$update_prepared"
-        color_line "$RED" "Could not preserve the script's executable permission."
+
+    if ! rewrite_update_url "$update_tmp" "$update_ready"; then
+        rm -f "$update_tmp" "$update_ready"
+        color_line "$RED" "COULD NOT SET THE UPDATE URL."
         pause
         return
     fi
-    if ! mv "$update_prepared" "$SCRIPT_PATH"; then
-        rm -f "$update_tmp"
-        color_line "$RED" "Could not replace the script. Keep it in a writable local folder and try again."
-        color_line "$YELLOW" "Prepared update remains at: $update_prepared"
+    if [ "$IOS_MODE" -eq 0 ] && ! sh -n "$update_ready"; then
+        rm -f "$update_tmp" "$update_ready"
+        color_line "$RED" "THE DOWNLOADED UPDATE HAS INVALID SHELL SYNTAX."
+        pause
+        return
+    fi
+
+    version_order=$(compare_versions "$VERSION" "$remote_version")
+    if [ "$version_order" -ge 0 ]; then
+        rm -f "$update_tmp" "$update_ready"
+        color_line "$GREEN" "VOSVIDEODOWNLOAD $VERSION IS ALREADY UP TO DATE."
+        pause
+        return
+    fi
+
+    color_line "$CYAN" "UPDATE FOUND: $VERSION TO $remote_version ($remote_type)"
+    color_line "$YELLOW" "SETTINGS, HISTORY, AND DOWNLOADED VIDEOS WILL BE KEPT."
+    printf '%s' "${CYAN}INSTALL THIS UPDATE? [Y/N]: ${RESET}"
+    read -r update_choice
+    case "$update_choice" in
+        Y|y) ;;
+        *)
+            rm -f "$update_tmp" "$update_ready"
+            color_line "$YELLOW" "UPDATE CANCELLED."
+            pause
+            return
+            ;;
+    esac
+
+    if [ -x "$SCRIPT_PATH" ] && ! chmod +x "$update_ready"; then
+        rm -f "$update_tmp" "$update_ready"
+        color_line "$RED" "COULD NOT PRESERVE THE SCRIPT'S EXECUTABLE PERMISSION."
+        pause
+        return
+    fi
+    if ! mv "$update_ready" "$SCRIPT_PATH"; then
+        rm -f "$update_tmp" "$update_ready"
+        color_line "$RED" "COULD NOT REPLACE THE SCRIPT IN THIS FOLDER."
         pause
         return
     fi
     rm -f "$update_tmp"
+
     if record_update "$remote_version" "$remote_type"; then
-        color_line "$GREEN" "Update installed and recorded in history.txt."
+        color_line "$GREEN" "UPDATE INSTALLED AND RECORDED."
     else
-        color_line "$YELLOW" "Update installed, but history.txt could not be written."
+        color_line "$YELLOW" "UPDATE INSTALLED, BUT HISTORY COULD NOT BE UPDATED."
     fi
-    color_line "$CYAN" "Quit this terminal session and run the script again to use the new version."
+    color_line "$CYAN" "QUIT THIS SESSION AND RUN THE SCRIPT AGAIN."
     pause
 }
 
-main_menu() {
-    while :; do
-        banner
-        printf '%s\n' "${RED}WELCOME TO VOSVIDEODOWNLOAD - THE GO-TO VIDEO DOWNLOADER${RESET}"
-        printf '%s\n' "${GREEN}1: Download video${RESET}"
-        printf '%s\n' "${GREEN}2: Dependencies${RESET}"
-        printf '%s\n' "${GREEN}3: Update VOSVideoDownload${RESET}"
-        printf '%s\n' "${GREEN}4: VOSVideoDownload settings${RESET}"
-        printf '%s\n' "${GREEN}5: Quit${RESET}"
-        printf '%s\n' "${GREEN}6: Restart${RESET}"
-        read -r choice
-        case "$choice" in
-            1) download_menu ;;
-            2) dependencies_menu ;;
-            3) update_app ;;
-            4) settings_menu ;;
-            5) exit 0 ;;
-            6) exec "$SCRIPT_PATH" ;;
-            *) ;;
-        esac
-    done
-}
-
-if ! mkdir -p "$VIDEO_DIR"; then
-    color_line "$RED" "Cannot create download folder: $VIDEO_DIR"
+if ! mkdir -p "$VIDEOS_DIR"; then
+    color_line "$RED" "CANNOT CREATE THE VIDEOS FOLDER: $VIDEOS_DIR"
     exit 1
 fi
-set_theme_color
+
 load_settings
-main_menu
+
+while true; do
+    banner
+    printf '%s\n' "${RED}WELCOME TO VOSVIDEODOWNLOAD - THE GO-TO VIDEO DOWNLOADER${RESET}"
+    printf '%s\n' "${GREEN}1: DOWNLOAD VIDEO${RESET}"
+    printf '%s\n' "${GREEN}2: DEPENDENCIES${RESET}"
+    printf '%s\n' "${GREEN}3: CHECK FOR APP UPDATES${RESET}"
+    printf '%s\n' "${GREEN}4: SETTINGS / VERSION INFO${RESET}"
+    printf '%s\n' "${GREEN}5: QUIT${RESET}"
+    printf '%s\n' "${GREEN}6: RESTART${RESET}"
+    read -r choice
+
+    case "$choice" in
+        1) download_menu ;;
+        2) dependencies_menu ;;
+        3) update_app ;;
+        4) settings_menu ;;
+        5) exit 0 ;;
+        6) exec "$SCRIPT_PATH" "$@" ;;
+    esac
+done
