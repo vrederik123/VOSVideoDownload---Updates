@@ -2,7 +2,7 @@
 :: ANY FALSE USE OF THIS PROGRAM CAN RESULT IN COPYRIGHT INFRINGEMENT TO THE RESPECTIVE AUTHORS.
 @echo off
 title VOSVIDEODOWNLOAD
-set "VERSION=1.03.20"
+set "VERSION=1.03.21"
 set "VERSION_TYPE=DEVELOPMENT"
 set "OPERATING_SYSTEM=Windows 11/PC"
 set "UPDATE_URL=https://raw.githubusercontent.com/vrederik123/VOSVideoDownload---Updates/main/vosvideodownload.bat"
@@ -194,14 +194,14 @@ set "miss=0"
 for %%D in (yt-dlp ffmpeg ffprobe ffplay) do call :check_one "%%D"
 echo.
 if "%miss%"=="1" (
-    echo %RED%ONE OR MORE DEPENDENCIES ARE MISSING OR NOT WORKING.%RESET%
+    echo %RED%ONE OR MORE LOCAL DEPENDENCY FILES ARE MISSING.%RESET%
     echo %RED%WOULD YOU LIKE TO INSTALL/REPAIR THE DEPENDENCIES?%RESET%
     echo %GREEN%[Y] YES ^| [N] NO%RESET%
     set "yn="&set /p "yn="
     if /i "%yn%"=="Y" goto dep_dl
     goto dependencies
 )
-echo %GREEN%ALL DEPENDENCIES ARE PRESENT AND RESPONDING.%RESET%
+echo %GREEN%ALL LOCAL DEPENDENCY FILES ARE PRESENT.%RESET%
 set /p "e=%CYAN%PRESS ENTER TO CONTINUE%RESET%"
 goto dependencies
 
@@ -211,13 +211,7 @@ if not exist "%~dp0DEPENDENCIES\%~1.exe" (
     set "miss=1"
     exit /b 0
 )
-set "versionArg=-version"
-if /i "%~1"=="yt-dlp" set "versionArg=--version"
-"%~dp0DEPENDENCIES\%~1.exe" %versionArg% >nul 2>&1
-if errorlevel 1 (
-    echo %RED%[ERROR] %~1 EXISTS BUT FAILED TO RUN.%RESET%
-    set "miss=1"
-) else echo %GREEN%[OK] %~1 IS INSTALLED AND RUNNING.%RESET%
+echo %GREEN%[OK] %~1 IS PRESENT LOCALLY.%RESET%
 exit /b 0
 
 :dep_dl
@@ -228,7 +222,7 @@ if errorlevel 1 (
     set /p "e=%CYAN%PRESS ENTER TO CONTINUE%RESET%"
     goto dependencies
 )
-echo %GREEN%LOCAL DEPENDENCIES INSTALLED AND VERIFIED.%RESET%
+echo %GREEN%LOCAL DEPENDENCY FILES INSTALLED.%RESET%
 echo %GREEN%INSTALL LOCATION: %~dp0DEPENDENCIES%RESET%
 set /p "e=%CYAN%PRESS ENTER TO RESTART%RESET%"
 start "" "%~f0"
@@ -242,7 +236,7 @@ if errorlevel 1 (
     set /p "e=%CYAN%PRESS ENTER TO CONTINUE%RESET%"
     goto dependencies
 )
-echo %GREEN%LOCAL DEPENDENCIES UPDATED AND VERIFIED.%RESET%
+echo %GREEN%LOCAL DEPENDENCY FILES UPDATED.%RESET%
 set /p "e=%CYAN%PRESS ENTER TO CONTINUE%RESET%"
 goto dependencies
 
