@@ -3,7 +3,7 @@
 VOS_IOS_SCRIPT=1
 VERSION=1.03.23
 VERSION_TYPE=APPLE
-UPDATE_URL=${VOS_UPDATE_URL:-https://raw.githubusercontent.com/vrederik123/VOSVideoDownload---Updates/main/iosvosvideodownload.sh}
+UPDATE_URL=${VOS_UPDATE_URL:-https://raw.githubusercontent.com/vrederik123/VOSVideoDownload---Updates/main/vosvideodownload.sh}
 
 case "$0" in
     */*) SCRIPT_NAME=${0##*/}; SCRIPT_DIR=${0%/*}; [ -n "$SCRIPT_DIR" ] || SCRIPT_DIR=/ ;;
