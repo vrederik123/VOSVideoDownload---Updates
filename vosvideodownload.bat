@@ -134,8 +134,10 @@ if "%remoteVersionType%"=="" set "remoteVersionType=UNKNOWN"
 set "currentVersion=%VERSION%"
 set "VOS_REMOTE_VERSION=%remoteVersion%"
 set "VOS_CURRENT_VERSION=%currentVersion%"
+set "VOS_REMOTE_VERSION_TYPE=%remoteVersionType%"
+set "VOS_CURRENT_VERSION_TYPE=%VERSION_TYPE%"
 set "updateStatus="
-for /f "delims=" %%A in ('powershell -NoProfile -Command "try { [version]$new=[version]$env:VOS_REMOTE_VERSION; [version]$old=[version]$env:VOS_CURRENT_VERSION; if ($new -gt $old) { 'NEW' } else { 'CURRENT' } } catch { 'INVALID' }"') do set "updateStatus=%%A"
+for /f "delims=" %%A in ('powershell -NoProfile -Command "try { [version]$new=[version]$env:VOS_REMOTE_VERSION; [version]$old=[version]$env:VOS_CURRENT_VERSION; $typeChanged=$env:VOS_REMOTE_VERSION_TYPE -ne 'UNKNOWN' -and -not [string]::Equals($env:VOS_REMOTE_VERSION_TYPE,$env:VOS_CURRENT_VERSION_TYPE,[StringComparison]::OrdinalIgnoreCase); if ($new -gt $old -or $typeChanged) { 'NEW' } else { 'CURRENT' } } catch { 'INVALID' }"') do set "updateStatus=%%A"
 if "%updateStatus%"=="INVALID" (
     del /f /q "%updateFile%" >nul 2>&1
     echo %RED%THE UPDATE VERSION IS INVALID.%RESET%
@@ -193,14 +195,15 @@ call :banner
 set "miss=0"
 for %%D in (yt-dlp ffmpeg ffprobe ffplay) do call :check_one "%%D"
 echo.
-if "%miss%"=="1" (
-    echo %RED%ONE OR MORE LOCAL DEPENDENCY FILES ARE MISSING.%RESET%
-    echo %RED%WOULD YOU LIKE TO INSTALL/REPAIR THE DEPENDENCIES?%RESET%
-    echo %GREEN%[Y] YES ^| [N] NO%RESET%
-    set "yn="&set /p "yn="
-    if /i "%yn%"=="Y" goto dep_dl
-    goto dependencies
-)
+if not "%miss%"=="1" goto dep_check_success
+echo %RED%ONE OR MORE LOCAL DEPENDENCY FILES ARE MISSING.%RESET%
+echo %RED%WOULD YOU LIKE TO INSTALL/REPAIR THE DEPENDENCIES?%RESET%
+echo %GREEN%[Y] YES ^| [N] NO%RESET%
+set "yn="&set /p "yn="
+if /i "%yn%"=="Y" goto dep_dl
+goto dependencies
+
+:dep_check_success
 echo %GREEN%ALL LOCAL DEPENDENCY FILES ARE PRESENT.%RESET%
 set /p "e=%CYAN%PRESS ENTER TO CONTINUE%RESET%"
 goto dependencies
