@@ -2,10 +2,10 @@
 :: ANY FALSE USE OF THIS PROGRAM CAN RESULT IN COPYRIGHT INFRINGEMENT TO THE RESPECTIVE AUTHORS.
 @echo off
 title VOSVIDEODOWNLOAD
-set "VERSION=1.03.17"
+set "VERSION=1.03.18"
 set "VERSION_TYPE=RELEASE"
 set "OPERATING_SYSTEM=Windows 11/PC"
-set "UPDATE_URL=https://raw.githubusercontent.com/vrederik123/VOSVideoDownload/main/VOSVideoDownload/vosvideodownload.bat"
+set "UPDATE_URL=https://raw.githubusercontent.com/vrederik123/VOSVideoDownload---Updates/main/vosvideodownload.bat"
 :: START IN THE BORDERLESS TERMINAL STYLE
 call :set_display_mode FULLSCREEN
 
