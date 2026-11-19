@@ -3,7 +3,7 @@
 @echo off
 title VOSVIDEODOWNLOAD
 set "VERSION=1.03.23"
-set "VERSION_TYPE=DEVELOPMENT"
+set "VERSION_TYPE=RELEASE"
 set "OPERATING_SYSTEM=Windows 11/PC"
 set "UPDATE_URL=https://raw.githubusercontent.com/vrederik123/VOSVideoDownload---Updates/main/vosvideodownload.bat"
 :: START IN THE BORDERLESS TERMINAL STYLE
