@@ -1,7 +1,7 @@
 #!/bin/sh
 
 VOS_IOS_SCRIPT=1
-VERSION=1.03.24
+VERSION=1.03.25
 VERSION_TYPE=APPLE
 UPDATE_URL_BASE=https://raw.githubusercontent.com/vrederik123/VOSVideoDownload---Updates/main/vosvideodownload.sh
 UPDATE_URL=${VOS_UPDATE_URL:-$UPDATE_URL_BASE}
@@ -230,6 +230,14 @@ rewrite_update_url() {
         { print }
         END { if (matches != 1) exit 1 }
     ' "$1" > "$2"
+}
+
+validate_update_syntax() {
+    if [ "$IOS_MODE" -eq 1 ]; then
+        color_line "$YELLOW" "Skipping nested sh -n validation in a-Shell; product and version checks passed."
+        return 0
+    fi
+    sh -n "$1"
 }
 
 run_ytdlp() {
@@ -607,7 +615,7 @@ update_app() {
         pause
         return
     fi
-    if ! sh -n "$update_prepared"; then
+    if ! validate_update_syntax "$update_prepared"; then
         rm -f "$update_tmp" "$update_prepared"
         color_line "$RED" "The downloaded update has invalid shell syntax."
         pause
