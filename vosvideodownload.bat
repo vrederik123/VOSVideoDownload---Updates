@@ -3,7 +3,7 @@
 @echo off
 title VOSVIDEODOWNLOAD
 set "VERSION=1.03.19"
-set "VERSION_TYPE=RELEASE"
+set "VERSION_TYPE=DEVELOPMENT"
 set "OPERATING_SYSTEM=Windows 11/PC"
 set "UPDATE_URL=https://raw.githubusercontent.com/vrederik123/VOSVideoDownload---Updates/main/vosvideodownload.bat"
 :: START IN THE BORDERLESS TERMINAL STYLE
@@ -11,8 +11,8 @@ call :set_display_mode FULLSCREEN
 
 :init
 :: LOAD LOCAL DEPENDENCIES PATH, ANSI COLORS, AND SETTINGS.TXT
-:: Keep required Windows/Winget paths while excluding user-installed dependency paths.
-set "PATH=%~dp0DEPENDENCIES;%SystemRoot%\System32;%SystemRoot%;%SystemRoot%\System32\Wbem;%SystemRoot%\System32\WindowsPowerShell\v1.0;%LOCALAPPDATA%\Microsoft\WindowsApps"
+:: Keep required Windows paths while excluding user-installed dependency paths.
+set "PATH=%~dp0DEPENDENCIES;%SystemRoot%\System32;%SystemRoot%;%SystemRoot%\System32\Wbem;%SystemRoot%\System32\WindowsPowerShell\v1.0"
 for /f "delims=" %%A in ('powershell -NoProfile -Command "[char]27"') do set "ESC=%%A"
 set "RED=%ESC%[91m"&set "DARKRED=%ESC%[31m"&set "ORANGE=%ESC%[38;5;208m"&set "YELLOW=%ESC%[93m"&set "GREEN=%ESC%[92m"&set "CYAN=%ESC%[96m"&set "RESET=%ESC%[0m"
 set "PURPLE=%ESC%[35m"&set "PINK=%ESC%[95m"&set "WHITE=%ESC%[97m"
@@ -211,7 +211,9 @@ if not exist "%~dp0DEPENDENCIES\%~1.exe" (
     set "miss=1"
     exit /b 0
 )
-"%~dp0DEPENDENCIES\%~1.exe" --version >nul 2>&1
+set "versionArg=-version"
+if /i "%~1"=="yt-dlp" set "versionArg=--version"
+"%~dp0DEPENDENCIES\%~1.exe" %versionArg% >nul 2>&1
 if errorlevel 1 (
     echo %RED%[ERROR] %~1 EXISTS BUT FAILED TO RUN.%RESET%
     set "miss=1"
@@ -220,49 +222,60 @@ exit /b 0
 
 :dep_dl
 call :banner
-if not exist "%~dp0DEPENDENCIES" mkdir "%~dp0DEPENDENCIES"
-if not exist "%~dp0DEPENDENCIES" (
-    echo %RED%COULD NOT CREATE THE DEPENDENCIES FOLDER.%RESET%
+echo %RED%INSTALLING YT-DLP, FFMPEG, FFPROBE, AND FFPLAY...%RESET%
+call :fetch_local_dependencies
+if errorlevel 1 (
     set /p "e=%CYAN%PRESS ENTER TO CONTINUE%RESET%"
     goto dependencies
 )
-echo %RED%INSTALLING YT-DLP, FFMPEG, FFPROBE, AND FFPLAY...%RESET%
-set "depFailed=0"
-for %%P in (yt-dlp.yt-dlp Gyan.FFmpeg) do call :install_package "%%P"
-for /r "%~dp0DEPENDENCIES" %%F in (ffmpeg.exe ffprobe.exe ffplay.exe) do if /i not "%%~dpF"=="%~dp0DEPENDENCIES\" move /y "%%F" "%~dp0DEPENDENCIES\" >nul 2>&1
-if "%depFailed%"=="1" (
-    echo %RED%ONE OR MORE PACKAGES FAILED TO INSTALL. REVIEW THE OUTPUT ABOVE.%RESET%
-) else (
-    echo %GREEN%INSTALLATION COMMANDS COMPLETED. VERIFY THE FILES WITH OPTION 1.%RESET%
-)
+echo %GREEN%LOCAL DEPENDENCIES INSTALLED AND VERIFIED.%RESET%
 echo %GREEN%INSTALL LOCATION: %~dp0DEPENDENCIES%RESET%
 set /p "e=%CYAN%PRESS ENTER TO RESTART%RESET%"
 start "" "%~f0"
 exit
 
-:install_package
-winget install --id %~1 -e --location "%~dp0DEPENDENCIES" --accept-source-agreements --accept-package-agreements
-if errorlevel 1 set "depFailed=1"
-exit /b 0
-
 :dep_up
 call :banner
 echo %RED%UPDATING YT-DLP, FFMPEG, FFPROBE, AND FFPLAY...%RESET%
-set "depFailed=0"
-for %%P in (yt-dlp.yt-dlp Gyan.FFmpeg) do call :upgrade_package "%%P"
-for /r "%~dp0DEPENDENCIES" %%F in (ffmpeg.exe ffprobe.exe ffplay.exe) do if /i not "%%~dpF"=="%~dp0DEPENDENCIES\" move /y "%%F" "%~dp0DEPENDENCIES\" >nul 2>&1
-if "%depFailed%"=="1" (
-    echo %RED%ONE OR MORE DEPENDENCY UPDATES FAILED.%RESET%
-) else (
-    echo %GREEN%UPDATE COMMANDS COMPLETED. VERIFY THE FILES WITH OPTION 1.%RESET%
+call :fetch_local_dependencies
+if errorlevel 1 (
+    set /p "e=%CYAN%PRESS ENTER TO CONTINUE%RESET%"
+    goto dependencies
 )
+echo %GREEN%LOCAL DEPENDENCIES UPDATED AND VERIFIED.%RESET%
 set /p "e=%CYAN%PRESS ENTER TO CONTINUE%RESET%"
 goto dependencies
 
-:upgrade_package
-winget upgrade --id %~1 -e --location "%~dp0DEPENDENCIES" --accept-source-agreements --accept-package-agreements
-if errorlevel 1 set "depFailed=1"
+:fetch_local_dependencies
+set "depTemp=%TEMP%\VOSVideoDownload-dependencies-%RANDOM%-%RANDOM%"
+set "VOS_DEPENDENCY_DIR=%~dp0DEPENDENCIES"
+set "VOS_DEPENDENCY_TEMP=%depTemp%"
+set "VOS_DEPENDENCY_YTDLP=%depTemp%\yt-dlp.exe"
+set "VOS_DEPENDENCY_FFMPEG=%depTemp%\ffmpeg-release-essentials.zip"
+if not exist "%VOS_DEPENDENCY_DIR%" mkdir "%VOS_DEPENDENCY_DIR%"
+if not exist "%VOS_DEPENDENCY_DIR%" goto fetch_dependencies_failed
+if not exist "%depTemp%" mkdir "%depTemp%"
+if not exist "%depTemp%" goto fetch_dependencies_failed
+where curl.exe >nul 2>&1
+if errorlevel 1 goto fetch_dependencies_failed
+curl.exe --location --fail --show-error --retry 2 --connect-timeout 15 --max-time 300 "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe" --output "%VOS_DEPENDENCY_YTDLP%"
+if errorlevel 1 goto fetch_dependencies_failed
+curl.exe --location --fail --show-error --retry 2 --connect-timeout 15 --max-time 600 "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" --output "%VOS_DEPENDENCY_FFMPEG%"
+if errorlevel 1 goto fetch_dependencies_failed
+for %%A in ("%VOS_DEPENDENCY_YTDLP%") do if %%~zA LSS 1000000 goto fetch_dependencies_failed
+for %%A in ("%VOS_DEPENDENCY_FFMPEG%") do if %%~zA LSS 10000000 goto fetch_dependencies_failed
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $extract=Join-Path $env:VOS_DEPENDENCY_TEMP 'ffmpeg-extracted'; Expand-Archive -LiteralPath $env:VOS_DEPENDENCY_FFMPEG -DestinationPath $extract -Force; $ffmpeg=Get-ChildItem -LiteralPath $extract -Filter 'ffmpeg.exe' -File -Recurse | Select-Object -First 1; if(-not $ffmpeg){throw 'FFmpeg archive did not contain ffmpeg.exe'}; $bin=$ffmpeg.DirectoryName; foreach($name in @('ffmpeg.exe','ffprobe.exe','ffplay.exe')){if(-not (Test-Path -LiteralPath (Join-Path $bin $name))){throw ('FFmpeg archive is missing '+$name)}}; foreach($name in @('yt-dlp.exe','ffmpeg.exe','ffprobe.exe','ffplay.exe')){Remove-Item -LiteralPath (Join-Path $env:VOS_DEPENDENCY_DIR $name) -Force -ErrorAction SilentlyContinue}; Get-ChildItem -LiteralPath $env:VOS_DEPENDENCY_DIR -File | Where-Object { $_.Name -like 'av*.dll' -or $_.Name -like 'sw*.dll' -or $_.Name -like 'postproc*.dll' } | Remove-Item -Force; Get-ChildItem -LiteralPath $bin -File | Copy-Item -Destination $env:VOS_DEPENDENCY_DIR -Force; Copy-Item -LiteralPath $env:VOS_DEPENDENCY_YTDLP -Destination (Join-Path $env:VOS_DEPENDENCY_DIR 'yt-dlp.exe') -Force"
+if errorlevel 1 goto fetch_dependencies_failed
+set "miss=0"
+for %%D in (yt-dlp ffmpeg ffprobe ffplay) do call :check_one "%%D"
+if "%miss%"=="1" goto fetch_dependencies_failed
+rmdir /s /q "%depTemp%" >nul 2>&1
 exit /b 0
+
+:fetch_dependencies_failed
+if defined depTemp if exist "%depTemp%" rmdir /s /q "%depTemp%" >nul 2>&1
+echo %RED%DEPENDENCY DOWNLOAD OR INSTALL FAILED. REVIEW THE ERROR ABOVE AND TRY AGAIN.%RESET%
+exit /b 1
 
 :dep_del
 call :banner
@@ -277,12 +290,13 @@ set "x="&set /p "x="
 if "%x%"=="" goto dependencies
 if "%x%"=="1" (
     del /f /q "%~dp0DEPENDENCIES\yt-dlp.exe" >nul 2>&1
-    echo %GREEN%LOCAL YT-DLP FILE REMOVED IF IT WAS PRESENT. WINGET PACKAGES WERE NOT UNINSTALLED.%RESET%
+    echo %GREEN%LOCAL YT-DLP FILE REMOVED IF IT WAS PRESENT. GLOBAL INSTALLATIONS WERE NOT REMOVED.%RESET%
 )
 if "%x%"=="2" (
     del /f /q "%~dp0DEPENDENCIES\ffmpeg.exe" "%~dp0DEPENDENCIES\ffprobe.exe" "%~dp0DEPENDENCIES\ffplay.exe" >nul 2>&1
+    del /f /q "%~dp0DEPENDENCIES\av*.dll" "%~dp0DEPENDENCIES\sw*.dll" "%~dp0DEPENDENCIES\postproc*.dll" >nul 2>&1
     for /d %%D in ("%~dp0DEPENDENCIES\ffmpeg*") do if exist "%%~fD" rmdir /s /q "%%~fD"
-    echo %GREEN%LOCAL FFMPEG FILES REMOVED IF PRESENT. WINGET PACKAGES WERE NOT UNINSTALLED.%RESET%
+    echo %GREEN%LOCAL FFMPEG FILES REMOVED IF PRESENT. GLOBAL INSTALLATIONS WERE NOT REMOVED.%RESET%
 )
 if "%x%"=="3" (
     del /f /q "%~dp0DEPENDENCIES\ffprobe.exe" >nul 2>&1
@@ -294,7 +308,7 @@ if "%x%"=="4" (
 )
 if "%x%"=="5" (
     if exist "%~dp0DEPENDENCIES" rmdir /s /q "%~dp0DEPENDENCIES"
-    echo %GREEN%LOCAL DEPENDENCIES FOLDER REMOVED. WINGET PACKAGES WERE NOT UNINSTALLED.%RESET%
+    echo %GREEN%LOCAL DEPENDENCIES FOLDER REMOVED. GLOBAL INSTALLATIONS WERE NOT REMOVED.%RESET%
 )
 if not "%x%"=="1" if not "%x%"=="2" if not "%x%"=="3" if not "%x%"=="4" if not "%x%"=="5" goto dependencies
 set /p "e=%CYAN%PRESS ENTER TO CONTINUE%RESET%"
