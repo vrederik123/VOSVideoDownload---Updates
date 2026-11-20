@@ -2,13 +2,14 @@
 # TURN INTO ".SH" TO USE.
 # ANY FALSE USE OF THIS PROGRAM CAN RESULT IN COPYRIGHT INFRINGEMENT TO THE RESPECTIVE AUTHORS.
 
-VERSION="1.00.11"
+VERSION="1.00.12"
 VERSION_TYPE="RELEASE (IOS BUILD)"
 UPDATE_URL="https://raw.githubusercontent.com/vrederik123/VOSVideoDownload---Updates/main/vosvideodownload.sh"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SCRIPT_PATH="$SCRIPT_DIR/$(basename "$0")"
 VIDEOS_DIR="$SCRIPT_DIR/VIDEOS"
+HISTORY_FILE="$SCRIPT_DIR/history.txt"
 
 ESC=$(printf '\033')
 RED="${ESC}[91m"
@@ -179,6 +180,29 @@ dependencies_menu() {
     done
 }
 
+update_animation() {
+    bar_width=24
+    i=0
+    while [ "$i" -le "$bar_width" ]; do
+        filled=""
+        empty=""
+        j=0
+        while [ "$j" -lt "$i" ]; do
+            filled="${filled}█"
+            j=$((j + 1))
+        done
+        while [ "$j" -lt "$bar_width" ]; do
+            empty="${empty} "
+            j=$((j + 1))
+        done
+        percent=$((i * 100 / bar_width))
+        printf '\r%s[%s%s] %3d%%' "$CYAN" "$filled" "$empty" "$percent"
+        sleep 0.04
+        i=$((i + 1))
+    done
+    printf '\n%s\n' "$RESET"
+}
+
 update_program() {
     banner
     printf "%s\n" "${RED}CHECKING FOR VOSVIDEODOWNLOAD UPDATES...${RESET}"
@@ -232,6 +256,7 @@ update_program() {
     fi
 
     printf "%s\n" "${CYAN}UPDATE FOUND: $VERSION TO $remote_version${RESET}"
+    update_animation
     printf "%s" "${CYAN}INSTALL UPDATE AND RESTART? [Y/N]: ${RESET}"
     read -r update_choice
     case "$update_choice" in
@@ -245,6 +270,15 @@ update_program() {
         printf "%s" "${CYAN}PRESS ENTER TO CONTINUE${RESET}"
         read -r enter
         return
+    fi
+
+    if [ ! -f "$HISTORY_FILE" ]; then
+        printf '%s\n' 'VOSVIDEODOWNLOAD UPDATE HISTORY LOG' > "$HISTORY_FILE"
+    fi
+    if printf 'UPDATE: %s (%s) -> %s (%s) | %s\n' "$VERSION" "$VERSION_TYPE" "$remote_version" "$(sed -n 's/^VERSION_TYPE="\([^"]*\)".*/\1/p' "$SCRIPT_PATH" | head -n 1)" "$(date '+%Y-%m-%d %H:%M:%S')" >> "$HISTORY_FILE"; then
+        printf "%s\n" "${GREEN}UPDATE HISTORY SAVED TO: $HISTORY_FILE${RESET}"
+    else
+        printf "%s\n" "${YELLOW}WARNING: UPDATE INSTALLED, BUT HISTORY COULD NOT BE WRITTEN.${RESET}"
     fi
 
     printf "%s\n" "${GREEN}UPDATE INSTALLED. RESTARTING...${RESET}"
@@ -277,8 +311,8 @@ while true; do
     printf "%s\n" "${RED}WELCOME TO VOSVIDEODOWNLOAD - THE GO-TO YOUTUBE DOWNLOADER${RESET}"
     printf "%s\n" "${GREEN}1: DOWNLOAD VIDEO${RESET}"
     printf "%s\n" "${GREEN}2: DEPENDENCIES${RESET}"
-    printf "%s\n" "${GREEN}3: CHECK VOSVIDEODOWNLOAD VERSION${RESET}"
-    printf "%s\n" "${GREEN}4: UPDATE VOSVIDEODOWNLOAD${RESET}"
+    printf "%s\n" "${GREEN}3: UPDATE VOSVIDEODOWNLOAD${RESET}"
+    printf "%s\n" "${GREEN}4: CHECK VOSVIDEODOWNLOAD VERSION${RESET}"
     printf "%s\n" "${GREEN}5: QUIT${RESET}"
     printf "%s\n" "${GREEN}6: RESTART${RESET}"
     read -r choice
@@ -286,8 +320,8 @@ while true; do
     case "$choice" in
         1) download_video ;;
         2) dependencies_menu ;;
-        3) version_info ;;
-        4) update_program ;;
+        3) update_program ;;
+        4) version_info ;;
         5) exit 0 ;;
         6) exec "$SCRIPT_PATH" "$@" ;;
     esac
