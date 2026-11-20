@@ -2,7 +2,12 @@
 # TURN INTO ".SH" TO USE.
 # ANY FALSE USE OF THIS PROGRAM CAN RESULT IN COPYRIGHT INFRINGEMENT TO THE RESPECTIVE AUTHORS.
 
+VERSION="1.00.11"
+VERSION_TYPE="RELEASE (IOS BUILD)"
+UPDATE_URL="https://raw.githubusercontent.com/vrederik123/VOSVideoDownload---Updates/main/vosvideodownload.sh"
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_PATH="$SCRIPT_DIR/$(basename "$0")"
 VIDEOS_DIR="$SCRIPT_DIR/VIDEOS"
 
 ESC=$(printf '\033')
@@ -174,6 +179,78 @@ dependencies_menu() {
     done
 }
 
+update_program() {
+    banner
+    printf "%s\n" "${RED}CHECKING FOR VOSVIDEODOWNLOAD UPDATES...${RESET}"
+
+    update_file=$(mktemp "$SCRIPT_DIR/.vosvideodownload-update.XXXXXX") || {
+        printf "%s\n" "${RED}COULD NOT CREATE A TEMPORARY UPDATE FILE IN THE PROGRAM FOLDER.${RESET}"
+        printf "%s" "${CYAN}PRESS ENTER TO CONTINUE${RESET}"
+        read -r enter
+        return
+    }
+
+    if command -v curl >/dev/null 2>&1; then
+        if ! curl -fL --connect-timeout 10 --max-time 60 "$UPDATE_URL" -o "$update_file"; then
+            rm -f "$update_file"
+            printf "%s\n" "${RED}UPDATE DOWNLOAD FAILED. CHECK YOUR CONNECTION AND TRY AGAIN.${RESET}"
+            printf "%s" "${CYAN}PRESS ENTER TO CONTINUE${RESET}"
+            read -r enter
+            return
+        fi
+    elif command -v wget >/dev/null 2>&1; then
+        if ! wget -q --timeout=30 -O "$update_file" "$UPDATE_URL"; then
+            rm -f "$update_file"
+            printf "%s\n" "${RED}UPDATE DOWNLOAD FAILED. CHECK YOUR CONNECTION AND TRY AGAIN.${RESET}"
+            printf "%s" "${CYAN}PRESS ENTER TO CONTINUE${RESET}"
+            read -r enter
+            return
+        fi
+    else
+        rm -f "$update_file"
+        printf "%s\n" "${RED}CURL OR WGET IS REQUIRED TO DOWNLOAD UPDATES.${RESET}"
+        printf "%s" "${CYAN}PRESS ENTER TO CONTINUE${RESET}"
+        read -r enter
+        return
+    fi
+
+    remote_version=$(sed -n 's/^VERSION="\([0-9][0-9.]*\)".*/\1/p' "$update_file" | head -n 1)
+    if [ -z "$remote_version" ] || ! grep -q '^#!/bin/sh' "$update_file" || ! sh -n "$update_file"; then
+        rm -f "$update_file"
+        printf "%s\n" "${RED}THE DOWNLOADED UPDATE IS INVALID; YOUR INSTALLED SCRIPT WAS NOT CHANGED.${RESET}"
+        printf "%s" "${CYAN}PRESS ENTER TO CONTINUE${RESET}"
+        read -r enter
+        return
+    fi
+
+    if [ "$remote_version" = "$VERSION" ]; then
+        rm -f "$update_file"
+        printf "%s\n" "${GREEN}VOSVIDEODOWNLOAD $VERSION IS ALREADY UP TO DATE.${RESET}"
+        printf "%s" "${CYAN}PRESS ENTER TO CONTINUE${RESET}"
+        read -r enter
+        return
+    fi
+
+    printf "%s\n" "${CYAN}UPDATE FOUND: $VERSION TO $remote_version${RESET}"
+    printf "%s" "${CYAN}INSTALL UPDATE AND RESTART? [Y/N]: ${RESET}"
+    read -r update_choice
+    case "$update_choice" in
+        Y|y|YES|yes) ;;
+        *) rm -f "$update_file"; return ;;
+    esac
+
+    if ! chmod +x "$update_file" || ! mv -f "$update_file" "$SCRIPT_PATH"; then
+        rm -f "$update_file"
+        printf "%s\n" "${RED}COULD NOT INSTALL THE UPDATE. CHECK WRITE PERMISSIONS.${RESET}"
+        printf "%s" "${CYAN}PRESS ENTER TO CONTINUE${RESET}"
+        read -r enter
+        return
+    fi
+
+    printf "%s\n" "${GREEN}UPDATE INSTALLED. RESTARTING...${RESET}"
+    exec "$SCRIPT_PATH" "$@"
+}
+
 version_info() {
     banner
     dep_status="INSTALLED"
@@ -187,7 +264,7 @@ version_info() {
     fi
 
     printf "%s\n" "${RED} VOSVIDEODOWNLOAD${RESET}"
-    printf "%s\n" "${GREEN}VERSION: ${YELLOW}1.00.10 | RELEASE (IOS BUILD)${RESET}"
+    printf "%s\n" "${GREEN}VERSION: ${YELLOW}${VERSION} | ${VERSION_TYPE}${RESET}"
     printf "%s\n" "${GREEN}DEPENDENCIES: ${YELLOW}${dep_status}${RESET}"
     printf "%s\n" "${GREEN}VIDEOS DOWNLOADED: ${YELLOW}${vid_count}${RESET}"
     printf "\n"
@@ -201,15 +278,17 @@ while true; do
     printf "%s\n" "${GREEN}1: DOWNLOAD VIDEO${RESET}"
     printf "%s\n" "${GREEN}2: DEPENDENCIES${RESET}"
     printf "%s\n" "${GREEN}3: CHECK VOSVIDEODOWNLOAD VERSION${RESET}"
-    printf "%s\n" "${GREEN}4: QUIT${RESET}"
-    printf "%s\n" "${GREEN}5: RESTART${RESET}"
+    printf "%s\n" "${GREEN}4: UPDATE VOSVIDEODOWNLOAD${RESET}"
+    printf "%s\n" "${GREEN}5: QUIT${RESET}"
+    printf "%s\n" "${GREEN}6: RESTART${RESET}"
     read -r choice
 
     case "$choice" in
         1) download_video ;;
         2) dependencies_menu ;;
         3) version_info ;;
-        4) exit 0 ;;
-        5) exec "$0" "$@" ;;
+        4) update_program ;;
+        5) exit 0 ;;
+        6) exec "$SCRIPT_PATH" "$@" ;;
     esac
 done
