@@ -1,6 +1,6 @@
 #!/bin/sh
 # VOSVideoDownload shell edition. Only download videos you are authorized to save.
-VERSION="1.00.23"
+VERSION="1.00.24"
 VERSION_TYPE="RELEASE"
 OPERATING_SYSTEM="iOS / A-Shell"
 UPDATE_URL="https://raw.githubusercontent.com/vrederik123/VOSVideoDownload---Updates/main/vosvideodownload.sh"
@@ -9,7 +9,6 @@ SCRIPT_PATH="$SCRIPT_DIR/$(basename -- "$0")"
 VIDEOS_DIR="$SCRIPT_DIR/VIDEOS"
 HISTORY_FILE="$SCRIPT_DIR/history.txt"
 SETTINGS_FILE="$SCRIPT_DIR/settings.txt"
-if [ -r /dev/tty ] && [ -w /dev/tty ]; then exec </dev/tty >/dev/tty 2>&1; fi
 ESC=$(printf '\033')
 RED="${ESC}[91m"; DARKRED="${ESC}[31m"; ORANGE="${ESC}[38;5;208m"
 YELLOW="${ESC}[93m"; GREEN="${ESC}[92m"; CYAN="${ESC}[96m"; RESET="${ESC}[0m"
