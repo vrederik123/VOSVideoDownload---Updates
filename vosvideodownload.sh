@@ -2,7 +2,7 @@
 # VOSVideoDownload shell edition. Only download videos you are authorized to save.
 VERSION="1.00.25"
 VERSION_TYPE="RELEASE"
-OPERATING_SYSTEM="iOS / A-Shell"
+OPERATING_SYSTEM="A-Shell"
 UPDATE_URL="https://raw.githubusercontent.com/vrederik123/VOSVideoDownload---Updates/main/vosvideodownload.sh"
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" 2>/dev/null && pwd) || exit 1
 SCRIPT_PATH="$SCRIPT_DIR/$(basename -- "$0")"
