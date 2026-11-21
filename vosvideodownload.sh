@@ -1,6 +1,6 @@
 #!/bin/sh
 # VOSVideoDownload shell edition. Only download videos you are authorized to save.
-VERSION="1.00.25"
+VERSION="1.00.26"
 VERSION_TYPE="RELEASE"
 OPERATING_SYSTEM="A-Shell"
 UPDATE_URL="https://raw.githubusercontent.com/vrederik123/VOSVideoDownload---Updates/main/vosvideodownload.sh"
